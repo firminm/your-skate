@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:skateright_flutter/spot_editing/obstacle_selection.dart';
 import 'package:skateright_flutter/spot_editing/submit_text_field.dart';
 import 'package:skateright_flutter/entities/spot.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

@@ -47,21 +47,9 @@ class _SearchBarState extends State<SearchBar> {
   late final HttpsCallable firebaseCaller2;
   late final Location location;
   LocationData? _locationData;
-  // late final PlacesInterface
-  // placeCaller; // ATTN Sanjoon: this is the object that makes the API calls
 
   String query = '';
   bool makeAPICall = false;
-
-  // void _loadAroundUser() async {
-  //   // List<Spot> nearbySpots = await placeCaller.nearbySearch(searchRadius: 5000);
-  //   log('Spots = ' + nearbySpots.toString());
-
-  //   for (Spot spot in nearbySpots) {
-  //     log('adding (${spot.title})');
-  //     addSpotMarker(spot);
-  //   }
-  // }
 
   @override
   void initState() {
@@ -74,16 +62,20 @@ class _SearchBarState extends State<SearchBar> {
     firebaseCaller2 =
         FirebaseFunctions.instance.httpsCallable('getCollectionData');
     location = Location();
-    _getResultsFromQuery(' ');
-    // placeCaller = PlacesInterface(location: widget.location);
 
     for (String opt in options) {
       selections[opt] =
           1; // Note: eventually need to figure out a way to do staircount
     }
-    selections['Park'] = 0; // Used for demo day 4/20 to showcase API calls
+    _loadAroundUser();
+  }
 
-    //  _loadAroundUser();
+  void _loadAroundUser() async {
+    var res = await _getResultsFromQuery(''); // returns future list of spot
+    log('${res.toString()}');
+    for (Spot spot in res) {
+      addSpotMarker(spot);
+    }
   }
 
   StatefulBuilder _advSearchBuilder() {
@@ -157,10 +149,7 @@ class _SearchBarState extends State<SearchBar> {
       onQueryChanged: (input) {
         // Changing query calls builder which handles DB querying
         if (input != query && input != query.substring(0, input.length))
-          setState(() {
-            makeAPICall = true;
-            query = input;
-          });
+          setState(() => query = input);
       },
       onSubmitted: (input) async {
         query = input; // Not necesary due to onQueryChanged ?
@@ -233,9 +222,6 @@ class _SearchBarState extends State<SearchBar> {
   }
 
   Column _buildSearchResults(List<Spot> results) {
-    // List<Spot> results =
-    //     _getResultsFromQuery(query); // MUST COMPLETE BEFORE BUILDING
-
     Color backgroundColor = Theme.of(context).backgroundColor;
     makeAPICall = false;
     return Column(
@@ -258,10 +244,6 @@ class _SearchBarState extends State<SearchBar> {
             tileColor: backgroundColor,
             hoverColor: backgroundColor,
             selectedTileColor: backgroundColor,
-            /* Lightmode */
-            // tileColor: Colors.grey[200],
-            // hoverColor: Colors.grey[300],
-            // selectedTileColor: Colors.grey[400],
           ),
         ],
       ],
@@ -272,42 +254,27 @@ class _SearchBarState extends State<SearchBar> {
     _locationData = await location.getLocation();
     query = query.toLowerCase();
 
-    List<Spot> spots = [booth, buBeach, fakeSpot, fakeSpot1];
-    List<Spot> res = [];
-    if (selections['Park'] == 0 || makeAPICall == false) {
-      res.addAll(
-          spots.where((spot) => spot.title.toLowerCase().contains(query)));
-      return res;
-    } else if (makeAPICall == true) {
-      log('(${_locationData!.latitude!}, ${_locationData!.longitude!})');
-      var call = await firebaseCaller.call(<String, double>{
-        'latitude': _locationData!.latitude!,
-        'longitude': _locationData!.longitude!,
-      });
+    List<Spot> spots;
+    List<Spot> res = query == '' ? [booth, buBeach] : [];
 
-      var call2 = await firebaseCaller.call(<String, String>{
-        'collection': 'SkateSpots',
-      });
-      log('getCollectionData: ${call2.data.toString()}');
+    var call = await firebaseCaller.call(<String, dynamic>{
+      'latitude': _locationData!.latitude!,
+      'longitude': _locationData!.longitude!,
+      'radius': 5000,
+      'keyword': query,
+    });
 
-      // Response response = await get(Uri.parse(call.data));
-      // if (response.statusCode == 200) {
-      // Map<String, dynamic> decoded = jsonDecode(call.data); //response.body);
-      log('${call.data.toString()}');
-      List<dynamic> body = call.data['results'];
-      log('${body.toString()}');
+    List<dynamic> body = call.data['results'];
 
-      List<Spot> spots = body.map(
-        (item) {
-          return Spot.fromJson(item, 'AIzaSyBGiyH12S9SDH7Pn9AdFbRRvYG8WF4DCy0');
-        },
-      ).toList();
+    spots = body.map(
+      (item) {
+        Map<String, dynamic> itemF = Map.from(item);
 
-      res.addAll(spots);
-    } else {
-      throw "Unable to retrieve posts";
-    }
-    // return placeCaller.nearbySearch(keyword: query);
+        return Spot.fromJson(itemF, 'AIzaSyBHbE8gY1lkShRnfptN5wLNJgB06qgFNvg');
+      },
+    ).toList();
+
+    res.addAll(spots);
 
     return res;
   }

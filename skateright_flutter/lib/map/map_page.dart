@@ -198,7 +198,7 @@ class _MapScreenState extends State<MapScreen> {
             .listen((newPos) => _currentLocation = newPos);
       }
     });
-    setDummyMarkers();
+    // setDummyMarkers();
 
     _mapCreated = true;
   }
