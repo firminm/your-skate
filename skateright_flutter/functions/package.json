@@ -14,9 +14,12 @@
   },
   "main": "index.js",
   "dependencies": {
+    "axios": "^0.26.1",
+    "firebase": "^8.10.1",
     "firebase-admin": "^10.0.2",
-    "firebase-functions": "^3.18.0",
-    "axios": "^0.26.1"
+    "firebase-functions": "^3.22.0",
+    "geofire": "^5.2.0",
+    "geofire-common": "^5.2.0"
   },
   "devDependencies": {
     "eslint": "^8.9.0",

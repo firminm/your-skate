@@ -44,6 +44,7 @@ class _SearchBarState extends State<SearchBar> {
   late final addSpotMarker;
   late final goToSpot;
   late final HttpsCallable firebaseCaller;
+  late final HttpsCallable firebaseCaller2;
   late final Location location;
   LocationData? _locationData;
   // late final PlacesInterface
@@ -70,6 +71,8 @@ class _SearchBarState extends State<SearchBar> {
     goToSpot = widget.goToSpot;
     firebaseCaller =
         FirebaseFunctions.instance.httpsCallable('getGoogleNearbyOnCall');
+    firebaseCaller2 =
+        FirebaseFunctions.instance.httpsCallable('getCollectionData');
     location = Location();
     _getResultsFromQuery(' ');
     // placeCaller = PlacesInterface(location: widget.location);
@@ -281,6 +284,11 @@ class _SearchBarState extends State<SearchBar> {
         'latitude': _locationData!.latitude!,
         'longitude': _locationData!.longitude!,
       });
+
+      var call2 = await firebaseCaller.call(<String, String>{
+        'collection': 'SkateSpots',
+      });
+      log('getCollectionData: ${call2.data.toString()}');
 
       // Response response = await get(Uri.parse(call.data));
       // if (response.statusCode == 200) {

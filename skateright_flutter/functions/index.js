@@ -1,9 +1,9 @@
 // The Cloud Functions for Firebase SDK to create Cloud Functions and set up triggers.
 const functions = require("firebase-functions");
-
 // The Firebase Admin SDK to access Firestore.
 const admin = require('firebase-admin');
 const axios = require('axios');
+const geofire = require('geofire-common');
 admin.initializeApp();
 
 // // Create and Deploy Your First Cloud Functions
@@ -44,28 +44,111 @@ exports.makeUppercase = functions.firestore.document('/messages/{documentId}')
     return snap.ref.set({ uppercase }, { merge: true });
   });
 
+exports.reverseGeocode = functions.https.onCall(async (data, context) => {
+  const lat = data.latitude;
+  const long = data.longitude;
+  const key = "AIzaSyBGiyH12S9SDH7Pn9AdFbRRvYG8WF4DCy0";
+  const location_type = "ROOFTOP"
+  const link = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&location_type=${location_type}&key=${key}`
+  functions.logger.log('api link used: ' + link);
+  var config = {
+    method: 'get',
+    url: link,
+    headers: { }
+  };
+
+  const promise = axios(config);
+  const dataPromise = promise.then((response) => response.data);
+  var data = await dataPromise;
+  var length = data.results.length;
+  var result = [];
+  for (var i = 0; i < length; i++) {
+    var address = data.results[i].formatted_address;
+    var placeID = data.results[i].place_id;
+    result.push({address: address, placeID: placeID});
+  }
+  return result;
+});
+
+exports.geoHash = functions.https.onCall(async (data, context) => {
+  const lat = data.latitude;
+  const long = data.longitude;
+  const hash = geofire.geohashForLocation([Number(lat), Number(long)]);
+  return hash;
+});
+
+exports.getSkateSpotData = functions.https.
+  onCall(async (data, context) => {
+    var keyword = data.keyword;
+    var latitude = data.latitude;
+    var longitude = data.longitude;
+    if (latitude !== undefined && longitude !== undefined) {
+      //TODO
+    }
+    functions.logger.log('Getting collection data');
+    var result = [];
+    var db = admin.firestore();
+    const skateSpots = db.collection("SkateSpots").get().then(snapshot => {
+      snapshot.forEach(doc => {
+        if (doc.data().title.toLowerCase().includes(keyword.toLowerCase())) {
+          var spot = {
+            "id": doc.id,
+            "lat": doc.data().latitude,
+            "long": doc.data().longitude,
+            "address": doc.data().address,
+            "comments": doc.data().comments,
+            "obstacles": doc.data().obstacles,
+            "pictures": doc.data().pictures,
+            "title": doc.data().title,
+          }
+          result = result.concat(spot);
+        }
+      });
+    }
+    );
+    var s = await skateSpots;
+    return result;
+});
+
 exports.getGoogleNearbyOnCall = functions.https.
   onCall(async (data, context) => {
     const lat = data.latitude;
     const long = data.longitude;
     const key = "AIzaSyBGiyH12S9SDH7Pn9AdFbRRvYG8WF4DCy0";
     var radius = data.radius; // optional
-    var link = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${long}&radius=${radius}&key=${key}`;
+
+    // check if radius is set
     if (radius !== undefined) {
       functions.logger.log(`radius passed: ${radius}`);
     }
     else {
-      radius = 5000;
-      functions.logger.log('no radius passed, defaulting to 5000');
+      radius = 1500;
+      functions.logger.log('no radius passed, defaulting to 1500');
     }
+
+    // var call = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json' + ((keyword != null) ? `?keyword=$keyword%22skatepark` : `?keyword=skatepark`);
+    // call += `&location=${lat},${long}`;
+    // call += `&radius=${radius}`;
+    // call += `&key=${key}`;
+
+    // generate link without keywords
+    var link = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${long}&radius=${radius}&key=${key}`;
     const keyword = data.keyword; // optional
+
+    // check if keyword is set
     if (keyword !== undefined) {
-      link = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat}%2C${long}&radius=${radius}&keyword=${keyword}&key=${key}`;
+      link = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${long}&radius=${radius}&keyword=${keyword} skatepark&key=${key}`;
       functions.logger.log(`keyword passed: ${keyword}`);
+      // console.log(`keyword passed: ${keyword}`);
     }
     else {
+      link = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${long}&radius=${radius}&keyword=skatepark&key=${key}`
       functions.logger.log('no keyword passed, removing keyword filter');
+      // console.log(`no keyword passed, removing keyword filter`);
     }
+
+    functions.logger.log('api link used: ' + link);
+    // console.log('api link used: ' + link);
     var config = {
       method: 'get',
       url: link,
@@ -133,24 +216,6 @@ exports.getGoogleNearbyOnCall = functions.https.
         console.log(error);
         return callback(new Error("Error getting google search"))
       });
-
-    // axios({
-    //   method: 'GET',
-    //   url: 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?', //https://maps.googleapis.com/maps/api/directions/json',
-    //   params: {
-    //     location: lat + "%" + long,
-    //     radius: "100",
-    //     key: ""
-    //   },
-    // })
-    //   .then(response => {
-    //     let legs = response.data.routes[0].legs[0];
-    //     return callback(legs);
-    //   })
-    //   .catch(error => {
-    //     console.log('Failed calling Nearby API');
-    //     return callback(new Error("Error getting Google Places Nearby Search"))
-    //   })
   });
 
   exports.getGoogleTextSearchOnCall = functions.https.
@@ -163,27 +228,10 @@ exports.getGoogleNearbyOnCall = functions.https.
     var config = {
       method: 'get',
       url: `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&radius=5000&key=${key}`,
-      // params: {
-      //   location: lat + '%2C' + long,
-      //   radius: 1500,
-      //   key: 'x'
-      // },
       headers: { }
     };
 
     const promise = axios(config);
     const dataPromise = promise.then((response) => response.data);
     return dataPromise;
-
-    // return axios(config)
-    //   .then(response => {
-    //     const places = JSON.stringify(response.data);
-    //     console.log(places);
-    //     functions.logger.log('Places', context.params.documentId, places);
-    //     return snap.ref.set({ searchResult }, { merge: true });
-    //   })
-    //   .catch(error => {
-    //     console.log(error);
-    //     return callback(new Error("Error getting google search"))
-    //   });
   });
