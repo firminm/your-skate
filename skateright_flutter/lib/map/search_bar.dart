@@ -183,19 +183,24 @@ class _SearchBarState extends State<SearchBar> {
                             snapshot.error.toString(),
                           );
                         }
-
                         return _buildSearchResults(snapshot.data!);
                       } else {
-                        return const SizedBox(
-                          height: 36,
-                          child: Center(
-                            child: SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                        );
+                        var heldSpots =
+                            Provider.of<SpotHolder>(context, listen: false)
+                                .heldSpots;
+                        Iterable<Spot> res = heldSpots
+                            .where((spot) => spot.title.contains(query));
+                        return _buildSearchResults(res.toList());
+                        // const SizedBox(
+                        //   height: 36,
+                        //   child: Center(
+                        //     child: SizedBox(
+                        //       width: 18,
+                        //       height: 18,
+                        //       child: CircularProgressIndicator(),
+                        //     ),
+                        //   ),
+                        // );
                       }
                     },
                   ),
@@ -251,16 +256,26 @@ class _SearchBarState extends State<SearchBar> {
 
     List<dynamic> body = call.data;
 
-    spots = body.map(
+    var li = body.map(
       (item) {
-        item = item[0];
+        try {
+          item = item[0];
+        } catch (_) {
+          return null;
+        }
+
         Map<String, dynamic> itemF = Map.from(item);
 
         return Spot.fromJson(itemF, 'AIzaSyBHbE8gY1lkShRnfptN5wLNJgB06qgFNvg');
       },
     ).toList();
-
-    res.addAll(spots);
+    List<Spot> noNullSpots = [];
+    for (var spot in li) {
+      if (spot != null) {
+        noNullSpots.add(spot);
+      }
+    }
+    res.addAll(noNullSpots);
 
     return res;
   }

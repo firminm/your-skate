@@ -72,8 +72,8 @@ class Spot {
     if (json.containsKey('comments')) {
       for (var comment in json['comments']) {
         comments.add(Comment(
-          id: ((json['lat'] * 20).ceil()).toString(),
-          user: ((json['long'] * 40).ceil()).toString(),
+          id: (((json['lat'] * 20).ceil())).toString(),
+          user: ((json['long'] * 40).ceil() * -1).toString(),
           description: comment,
         ));
       }

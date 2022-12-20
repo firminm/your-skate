@@ -123,13 +123,24 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
         if (item == []) {
           log('GOOGLE PLACES REQUEST FAILED');
         }
-        item = item[0];
+        try {
+          item = item[0];
+        } catch (e) {
+          return null;
+        }
 
         Map<String, dynamic> itemF = Map.from(item);
         return Spot.fromJson(itemF, 'AIzaSyBHbE8gY1lkShRnfptN5wLNJgB06qgFNvg');
       },
     ).toList();
-    return spots;
+    List<Spot> noNullSpots = [];
+    for (var spot in spots) {
+      if (spot != null) {
+        noNullSpots.add(spot);
+      }
+    }
+    // return spots;
+    return noNullSpots;
   }
 
   @override
@@ -151,7 +162,8 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
               },
             ).then(
               (currentLocation) async {
-                nearbySpots = await querySpots(currentLocation!);
+                // nearbySpots = await querySpots(currentLocation!);
+                nearbySpots = [booth, buBeach];
                 // nearbySpots?.addAll([booth, buBeach]);
                 return currentLocation;
               },

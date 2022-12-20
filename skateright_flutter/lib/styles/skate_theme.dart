@@ -95,7 +95,7 @@ final skateTheme = ThemeData(
 
     type: BottomNavigationBarType.fixed,
   ),
-  appBarTheme: AppBarTheme(
+  appBarTheme: const AppBarTheme(
       backgroundColor: sBlack,
       titleTextStyle: TextStyle(
           fontFamily: 'RobotoMono',

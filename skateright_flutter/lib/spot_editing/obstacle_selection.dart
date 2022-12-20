@@ -1,20 +1,21 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:skateright_flutter/entities/spot.dart';
+import 'package:skateright_flutter/state_control/spot_holder.dart';
+import 'package:provider/provider.dart';
 
 import '../entities/obstacles.dart';
 
 class ObstacleSelection extends StatelessWidget {
   ObstacleSelection({
-    List<String>? this.selectedObstacles,
     Key? key,
   }) : super(key: key);
-  List<String>? selectedObstacles;
   final obSelects = {};
 
   // Converts options list into a map... note: bad for desired stair implementation
 
-  void _initSelections() {
+  void _initSelections(List<String> selectedObstacles) {
     // obSelects ??= {};
 
     for (var opt in validObstacles) {
@@ -32,7 +33,10 @@ class ObstacleSelection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Obstacles obby = Obstacles();
-    _initSelections();
+    // _initSelections();
+    Spot spot = Provider.of<SpotHolder>(context).currentSpot!;
+    _initSelections(spot.obstacles);
+
     var size = MediaQuery.of(context).size;
 
     return StatefulBuilder(
