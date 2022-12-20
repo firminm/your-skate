@@ -51,6 +51,7 @@ dependencies:
   flutter_svg: ^1.0.3
   lottie: ^1.3.0
   flutter_rating_bar: ^4.0.0
+  geoflutterfire: ^3.0.3
 
 dev_dependencies:
   flutter_test:

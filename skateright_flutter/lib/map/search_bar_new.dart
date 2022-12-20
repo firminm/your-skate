@@ -44,6 +44,7 @@ class _SearchBarState extends State<SearchBar> {
   late final addSpotMarker;
   late final goToSpot;
   late final HttpsCallable firebaseCaller;
+  late final HttpsCallable firebaseCaller2;
   late final Location location;
   LocationData? _locationData;
 
@@ -58,6 +59,8 @@ class _SearchBarState extends State<SearchBar> {
     goToSpot = widget.goToSpot;
     firebaseCaller =
         FirebaseFunctions.instance.httpsCallable('getGoogleNearbyOnCall');
+    firebaseCaller2 =
+        FirebaseFunctions.instance.httpsCallable('getCollectionData');
     location = Location();
 
     for (String opt in options) {

@@ -1,11 +1,13 @@
 import 'dart:developer' as dev;
 import 'dart:math';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:skateright_flutter/spot_editing/submit_text_field.dart';
 import 'package:skateright_flutter/entities/spot.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:skateright_flutter/entities/obstacles.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 
 class CreateSpotPage extends StatefulWidget {
   const CreateSpotPage(
@@ -139,6 +141,7 @@ class _CreateSpotPageState extends State<CreateSpotPage> {
   /// Sends user-entered info to backend for further processing + db submit
   void _submitSpot() {
     final firestoreInstance = FirebaseFirestore.instance;
+    var collectionReferencce = firestoreInstance.collection('SkateSpots');
 
     String? addressText =
         (addressController.text.isEmpty) ? null : addressController.text;
@@ -172,6 +175,12 @@ class _CreateSpotPageState extends State<CreateSpotPage> {
       'obstacles': toAdd.obstacles,
     };
     docRef.set(data);
+    print('Added Data with ID: ${docRef.id}');
+    final newDocRef = collectionReferencce.doc(docRef.id);
+    firestoreInstance.collection("SkateSpots").get().then(
+          (res) => print("Got ${res.docs.length} spots"),
+          onError: (e) => print("Error completing: $e"),
+        );
 
     widget.addSpotToMap(toAdd);
 
